@@ -46,7 +46,11 @@ impl VoxServer for VoxServerImpl {
                 stream.read_to_string(&mut s)?;
                 let pack: VoxPack = rmp_serde::from_read_ref(s.as_bytes())?;
 
-                self.renderer.handle_vox_pack(pack);
+                if pack.z * self.device.pov_frequency() <= self.device.max_framerate() {
+                    self.renderer.handle_vox_pack(pack);
+                } else {
+                    break;
+                }
             }
         }
 
