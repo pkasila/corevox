@@ -1,45 +1,39 @@
 pub mod renderer;
 
 use std::error::Error;
-use std::hash::Hasher;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 use crate::devices::device::Device;
 use crate::network::server::renderer::Renderer;
 use crate::network::messages::VoxPack;
 
-trait VoxServer {
-    fn new(address: String, device: Box<dyn Device>, renderer: Box<dyn Renderer>) -> Self;
-    fn start_listener(&self) -> Result<(), Box<dyn Error>>;
-}
-
-struct VoxServerImpl {
+struct VoxServer {
     address: String,
     device: Box<dyn Device>,
     renderer: Box<dyn Renderer>,
 }
 
-unsafe impl Sync for VoxServerImpl {}
+unsafe impl Sync for VoxServer {}
 
-unsafe impl Send for VoxServerImpl {}
+unsafe impl Send for VoxServer {}
 
-impl VoxServer for VoxServerImpl {
-    fn new(address: String, device: Box<dyn Device>, renderer: Box<dyn Renderer>) -> Self {
-        return VoxServerImpl {
+impl VoxServer {
+    pub fn new(address: String, device: Box<dyn Device>, renderer: Box<dyn Renderer>) -> Self {
+        return VoxServer {
             address,
             device,
             renderer,
         };
     }
 
-    fn start_listener(&self) -> Result<(), Box<dyn Error>> {
+    pub fn start_listener(&self) -> Result<(), Box<dyn Error>> {
         let listener = TcpListener::bind(self.address.as_str())?;
 
         for stream in listener.incoming() {
             let mut stream = stream?;
 
             stream.write(&*rmp_serde::to_vec(&self.device.device_information())?)?;
-            stream.flush();
+            stream.flush()?;
 
             loop {
                 let mut s: String = "".to_string();

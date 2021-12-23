@@ -4,7 +4,6 @@ pub mod network;
 #[cfg(test)]
 mod tests {
     use crate::devices::device::Device;
-    use crate::devices::prototype_device::{PrototypeDevice, Frame};
     use crate::devices::science_fair_128::ScienceFair128;
 
     #[test]
