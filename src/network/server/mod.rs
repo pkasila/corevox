@@ -7,10 +7,10 @@ use crate::devices::device::Device;
 use crate::network::server::renderer::Renderer;
 use crate::network::messages::VoxPack;
 
-struct VoxServer {
-    address: String,
-    device: Box<dyn Device>,
-    renderer: Box<dyn Renderer>,
+pub struct VoxServer {
+    pub address: String,
+    pub device: Box<dyn Device>,
+    pub renderer: Box<dyn Renderer>,
 }
 
 unsafe impl Sync for VoxServer {}
