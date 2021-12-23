@@ -6,5 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1.52"
 serde = { version = "1.0", features = ["derive"] }
-rmp-serde = { version = "0.15.5" }
+tokio = { version = "1.15.0", features = ["full"] }
+tokio-serde = { version = "0.8.0", features = ["messagepack"] }
+tokio-util = { version = "0.6.9", features = ["codec"] }
+futures = "0.3.19"

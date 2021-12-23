@@ -1,11 +1,12 @@
 pub mod renderer;
 
-use std::error::Error;
-use std::io::{Read, Write};
-use std::net::TcpListener;
+use futures::prelude::*;
+use tokio::net::TcpListener;
+use tokio_serde::formats::SymmetricalMessagePack;
+use tokio_util::codec::{FramedRead, FramedWrite, LengthDelimitedCodec};
 use crate::devices::device::Device;
 use crate::network::server::renderer::Renderer;
-use crate::network::messages::VoxPack;
+use crate::network::messages::{DeviceInformation, VoxPack};
 
 pub struct VoxServer {
     pub address: String,
@@ -26,28 +27,37 @@ impl VoxServer {
         };
     }
 
-    pub fn start_listener(&self) -> Result<(), Box<dyn Error>> {
-        let listener = TcpListener::bind(self.address.as_str())?;
+    pub async fn start_listener(&self) {
+        let listener = TcpListener::bind(self.address.as_str()).await.unwrap();
 
-        for stream in listener.incoming() {
-            let mut stream = stream?;
+        println!("listening on {:?}", listener.local_addr());
 
-            stream.write(&*rmp_serde::to_vec(&self.device.device_information())?)?;
-            stream.flush()?;
+        loop {
+            let (socket, _) = listener.accept().await.unwrap();
 
-            loop {
-                let mut s: String = "".to_string();
-                stream.read_to_string(&mut s)?;
-                let pack: VoxPack = rmp_serde::from_read_ref(s.as_bytes())?;
+            let (read, write) = socket.into_split();
 
-                if pack.z * self.device.pov_frequency() <= self.device.max_framerate() {
-                    self.renderer.handle_vox_pack(pack);
-                } else {
-                    break;
-                }
+            let ld = FramedWrite::new(write, LengthDelimitedCodec::new());
+            let mut serialized = tokio_serde::SymmetricallyFramed::new(
+                ld,
+                SymmetricalMessagePack::<DeviceInformation>::default(),
+            );
+
+            serialized.send(self.device.device_information()).await.unwrap();
+
+            // Delimit frames using a length header
+            let length_delimited = FramedRead::new(read, LengthDelimitedCodec::new());
+
+            // Deserialize frames
+            let mut deserialized = tokio_serde::SymmetricallyFramed::new(
+                length_delimited,
+                SymmetricalMessagePack::<VoxPack>::default(),
+            );
+
+            // Spawn a task that prints all received messages to STDOUT
+            while let Some(msg) = deserialized.try_next().await.unwrap() {
+                self.renderer.handle_vox_pack(msg);
             }
         }
-
-        return Ok(());
     }
 }

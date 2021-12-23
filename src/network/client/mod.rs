@@ -1,44 +1,69 @@
 pub mod supplier;
 
 use std::error::Error;
-use std::io::{Read, Write};
-use std::net::TcpStream;
+use futures::prelude::*;
+use tokio::net::TcpStream;
+use tokio_serde::formats::*;
+use tokio_util::codec::{Framed, FramedRead, FramedWrite, LengthDelimitedCodec};
 use std::ptr::null;
+use tokio::net::tcp::OwnedWriteHalf;
 use crate::network::client::supplier::Supplier;
-use crate::network::messages::VoxPack;
+use crate::network::messages::{DeviceInformation, VoxPack};
 
+#[async_trait::async_trait]
 pub trait VoxClient {
     fn register_supplier(&self, s: Box<dyn Supplier>);
-    fn send_pack(&mut self, pack: VoxPack) -> Result<(), Box<dyn Error>>;
+    async fn send_pack(&mut self, pack: VoxPack) -> Result<(), Box<dyn Error>>;
 }
 
 pub struct VoxClientImpl {
     address: String,
-    stream: Box<TcpStream>,
+    device_info: DeviceInformation,
+    sender: tokio_serde::Framed<FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>, VoxPack, VoxPack, MessagePack<VoxPack, VoxPack>>
 }
 
 impl VoxClientImpl {
-    pub fn new(address: String) -> Result<VoxClientImpl, Box<dyn Error>> {
-        let mut stream = Box::new(TcpStream::connect(address.as_str())?);
+    pub async fn new(address: String) -> Result<VoxClientImpl, Box<dyn Error>> {
+        let (read, write) = TcpStream::connect(address.as_str()).await.unwrap().into_split();
 
-        let mut s = "".to_string();
-        stream.read_to_string(&mut s)?;
+        println!("Connected!");
+
+        // Delimit frames using a length header
+        let length_delimited = FramedRead::new(read, LengthDelimitedCodec::new());
+
+        // Deserialize frames
+        let mut deserialized = tokio_serde::SymmetricallyFramed::new(
+            length_delimited,
+            SymmetricalMessagePack::<DeviceInformation>::default(),
+        );
+
+        let msg: DeviceInformation = deserialized.try_next().await.unwrap().unwrap();
+
+        println!("Connected to the device {} ({})", msg.product_id, msg.serial_number);
+
+        let ld = FramedWrite::new(write, LengthDelimitedCodec::new());
+
+        let mut deserialized = tokio_serde::SymmetricallyFramed::new(
+            ld,
+            SymmetricalMessagePack::<VoxPack>::default(),
+        );
 
         return Ok(VoxClientImpl {
             address,
-            stream,
+            device_info: msg,
+            sender: deserialized,
         });
     }
 }
 
+#[async_trait::async_trait]
 impl VoxClient for VoxClientImpl {
     fn register_supplier(&self, s: Box<dyn Supplier>) {
         s.assign_client(self);
     }
 
-    fn send_pack(&mut self, pack: VoxPack) -> Result<(), Box<dyn Error>> {
-        self.stream.write(&*rmp_serde::to_vec(&pack)?)?;
-        self.stream.flush()?;
+    async fn send_pack(&mut self, pack: VoxPack) -> Result<(), Box<dyn Error>> {
+        self.sender.send(pack).await?;
         return Ok(());
     }
 }
