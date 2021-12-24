@@ -18,7 +18,7 @@ pub trait VoxClient {
 
 pub struct VoxClientImpl {
     address: String,
-    device_info: DeviceInformation,
+    pub device_info: DeviceInformation,
     sender: tokio_serde::Framed<FramedWrite<OwnedWriteHalf, LengthDelimitedCodec>, VoxPack, VoxPack, MessagePack<VoxPack, VoxPack>>
 }
 
