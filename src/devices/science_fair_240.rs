@@ -1,7 +1,7 @@
 use std::fs;
 use crate::devices::device::Device;
 
-pub struct ScienceFair128 {}
+pub struct ScienceFair240 {}
 
 impl Device for ScienceFair128 {
     fn product_id(&self) -> String {
@@ -21,6 +21,6 @@ impl Device for ScienceFair128 {
     }
 
     fn frame_size(&self) -> [i32; 2] {
-        [128, 128]
+        [240, 240]
     }
 }
