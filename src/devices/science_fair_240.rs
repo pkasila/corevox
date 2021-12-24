@@ -3,7 +3,7 @@ use crate::devices::device::Device;
 
 pub struct ScienceFair240 {}
 
-impl Device for ScienceFair128 {
+impl Device for ScienceFair240 {
     fn product_id(&self) -> String {
         "ScienceFair/0.1".to_string()
     }
