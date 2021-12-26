@@ -21,6 +21,6 @@ impl Device for ScienceFair240 {
     }
 
     fn vox_size(&self) -> [i32; 3] {
-        [240, 240, 5]
+        [240, 240, 2]
     }
 }
