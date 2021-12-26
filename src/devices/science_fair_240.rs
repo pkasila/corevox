@@ -13,7 +13,7 @@ impl Device for ScienceFair240 {
     }
 
     fn max_framerate(&self) -> i32 {
-        110
+        90
     }
 
     fn pov_frequency(&self) -> i32 {
