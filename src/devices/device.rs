@@ -1,13 +1,9 @@
 use crate::network::messages::DeviceInformation;
 
 pub trait Device {
-    fn product_id(&self) -> String {
-        return "PROTOTYPE_DEVICE".to_string();
-    }
+    fn product_id(&self) -> String;
 
-    fn serial_number(&self) -> String {
-        return "00000000-1111-2222-3333-444444555555".to_string();
-    }
+    fn serial_number(&self) -> String;
 
     fn max_framerate(&self) -> i32;
 
