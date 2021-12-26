@@ -17,10 +17,10 @@ impl Device for ScienceFair240 {
     }
 
     fn pov_frequency(&self) -> i32 {
-        24
+        30
     }
 
     fn vox_size(&self) -> [i32; 3] {
-        [240, 240, 4]
+        [240, 240, 3]
     }
 }
