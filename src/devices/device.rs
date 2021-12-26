@@ -13,7 +13,7 @@ pub trait Device {
 
     fn pov_frequency(&self) -> i32;
 
-    fn frame_size(&self) -> [i32; 2];
+    fn vox_size(&self) -> [i32; 3];
 
     fn device_information(&self) -> DeviceInformation {
         return DeviceInformation {
@@ -21,7 +21,7 @@ pub trait Device {
             serial_number: self.serial_number(),
             max_framerate: self.max_framerate(),
             pov_frequency: self.pov_frequency(),
-            frame_size: self.frame_size(),
+            vox_size: self.vox_size(),
         };
     }
 }

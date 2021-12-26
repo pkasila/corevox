@@ -13,14 +13,14 @@ impl Device for ScienceFair240 {
     }
 
     fn max_framerate(&self) -> i32 {
-        180
+        90
     }
 
     fn pov_frequency(&self) -> i32 {
         24
     }
 
-    fn frame_size(&self) -> [i32; 2] {
-        [240, 240]
+    fn vox_size(&self) -> [i32; 3] {
+        [240, 240, 3]
     }
 }

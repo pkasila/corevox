@@ -20,7 +20,7 @@ impl Device for ScienceFair320 {
         24
     }
 
-    fn frame_size(&self) -> [i32; 2] {
-        [320, 240]
+    fn vox_size(&self) -> [i32; 3] {
+        [320, 240, 12]
     }
 }
